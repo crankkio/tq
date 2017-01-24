@@ -11,9 +11,9 @@ namespace tq {
     Task* schedule(void (*fn)(void), unsigned int delay);
 
     Task* repeat(void (*fn)(void));
-    Task* repeat(void (*fn)(void), unsigned int delay);
+    Task* repeat(void (*fn)(void), unsigned int interval);
 
-    void dispatch();
+    void dispatch(void);
 
 }
 

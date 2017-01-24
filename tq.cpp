@@ -5,9 +5,10 @@
 
 namespace tq {
 
-    unsigned int counter = 0;
     std::queue<Task*> tasks;
     std::queue<Task*> nextTick;
+
+    unsigned int counter = 0;
     unsigned int (*getTimestamp)(void);
 
     void init(unsigned int (*fn)(void)) {
@@ -43,10 +44,10 @@ namespace tq {
         return task;
     }
 
-    Task* repeat(void (*callback)(void), unsigned int delay) {
+    Task* repeat(void (*callback)(void), unsigned int interval) {
         Task* task = new Task(counter++, callback);
 
-        task->delay = delay;
+        task->delay = interval;
         task->repeat = true;
         task->timestamp = getTimestamp();
 
@@ -54,36 +55,42 @@ namespace tq {
         return task;
     }
 
-    void dispatch() {
+    void dispatch(void) {
         unsigned int i   = tasks.size(),
                      now = getTimestamp();
 
+        // iterate current turn
         while (i--) {
             Task* task = tasks.front();
             tasks.pop();
 
+            // canceled - free
             if (task->canceled()) {
                 delete task;
                 task = NULL;
                 continue;
             }
+            // ready to execute
             else if (task->check(now)) {
                 task->callback();
 
+                // repeating - re-schedule
                 if (task->repeat) {
                     task->timestamp = now;
                     nextTick.push(task);
                 }
+                // executed once - free
                 else {
                     delete task;
                     task = NULL;
                 }
             }
+            // not current - re-enqueue
             else
                 nextTick.push(task);
         }
 
-        // schedule next turn
+        // enqueue next turn
         while (!nextTick.empty()) {
             tasks.push(nextTick.front());
             nextTick.pop();
