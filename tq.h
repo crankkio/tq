@@ -1,19 +1,29 @@
 #ifndef TQ_H
 #define TQ_H
 
-#include "TqTask.h"
+#include <functional>
+#include "Timeout.h"
 
 namespace tq {
 
-    void init(unsigned int (*fn)(void));
+class Task;
 
-    Task* schedule(void (*fn)(void));
-    Task* schedule(void (*fn)(void), unsigned int delay);
+class Handle {
+public:
+    Handle();
+    Handle(Task* task);
+    bool active() const;
+    void cancel();
+private:
+    Task* task;
+};
 
-    Task* repeat(void (*fn)(void));
-    Task* repeat(void (*fn)(void), unsigned int interval);
+Handle schedule(std::function<void(void)> callback);
+Handle delayedSchedule(std::function<void(void)> callback, float delaySeconds);
+Handle repeat(std::function<void(void)> callback, float periodSeconds);
+Handle delayedRepeat(std::function<void(void)> callback, float periodSeconds, float delaySeconds);
 
-    void dispatch(void);
+void dispatch();
 
 }
 

@@ -4,17 +4,11 @@ Simple C++ task queue implementation.
 
 # Example
 
-Handle interruptions and schedule a task without blocking `wait()` calls.
+Handle interrupts and schedule a task without blocking `wait()` calls.
 
 ```c++
 
 #include "tq.h"
-using namespace tq;
-
-unsigned int getTimestamp() {
-    // return an int which increases over time
-    // (e.g. a unix-like timestamp)
-}
 
 void turnVibrationOn() {
     // turn on vibration hardware
@@ -30,20 +24,19 @@ void refreshDisplay() {
 
 // turn on vibration for one second on button press
 // without blocking the UI
-// (assuming that getTimestamp() counts seconds)
 void onButtonPressedInterrupt() {
-    schedule(&turnVibrationOn);
-    schedule(&turnVibrationOff, 1);
+    tq::schedule(&turnVibrationOn);
+    tq::delayedSchedule(&turnVibrationOff, 1);
 }
 
 int main() {
-    init(&getTimestamp);
+    // execute every second
+    repeat(&refreshDisplay, 1);
 
-    // execute once in each turn
-    repeat(&refreshDisplay);
-
-    while (1)
-        dispatch();
+    while (1) {
+        tq::dispatch();
+        __WFI(); // wait for interrupts
+    }
 }
 
 ```
@@ -52,25 +45,18 @@ int main() {
 
 ## Methods
 
-### `void init(unsigned int (*getTimestamp)(void))`
+### `Handle schedule(std::function<void(void)> callback)`
+### `Handle delayedSchedule(std::function<void(void)> callback, float delaySeconds)`
 
-### `Task* schedule(void (*callback)(void))`
-### `Task* schedule(void (*callback)(void), unsigned int delay)`
-
-### `Task* repeat(void (*callback)(void))`
-### `Task* repeat(void (*callback)(void), unsigned int delay)`
+### `Handle repeat(std::function<void(void)> callback, float periodSeconds)`
+### `Handle delayedRepeat(std::function<void(void)> callback, float periodSeconds, float delaySeconds)`
 
 ### `void dispatch()`
 
-## Class: `Task`
 
-`Task* task = schedule(&callback, 1);`
+## Class: `Handle`
 
-### `unsigned int task->id`
-### `unsigned int task->delay`
-### `bool task->repeat`
-### `bool task->immediate`
+`Handle handle = delayedSchedule(&callback, 1);`
 
-### `void task->callback()`
-### `void task->cancel()`
-### `bool task->canceled()`
+### `void handle->cancel()`
+### `bool handle->active()`
