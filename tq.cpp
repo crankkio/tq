@@ -36,8 +36,9 @@ public:
     }
     
     void repeatTimeout() {
-        if (timeout)
-            timeout->attach(this, &Task::timeoutHandler, periodSeconds);
+        if (!timeout)
+            timeout = new Timeout;
+        timeout->attach(this, &Task::timeoutHandler, periodSeconds);
     }
     
     bool repeating() {
@@ -48,6 +49,7 @@ public:
     
 private:
     void timeoutHandler() {
+        delete timeout;
         timeout = NULL;
         __disable_irq();
         taskQueue.push(this);
